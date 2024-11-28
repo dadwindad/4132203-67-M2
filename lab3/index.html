@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="message1" class="msg"></div>
+    <div id="message2" class="msg"></div>
+</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="app.js"></script>
+
+<script>
+    $(document).ready(function() {
+       $("#message2").html("ดรัสวิน");
+       $(".msg").attr("style", "color: red");
+    });
+</script>
