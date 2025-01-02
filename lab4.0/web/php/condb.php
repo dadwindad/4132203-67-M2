@@ -17,10 +17,10 @@ try {
 
     $response = ["status" => 200, "message" => "Connected successfully to the database."];
 
-    // echo json_encode($response);
+    echo json_encode($response);
 } catch (Exception $e) {
 
     $response = ["status" => 500, "message" => "Error: " . $e->getMessage()];
 
-    // echo json_encode($response);
+    echo json_encode($response);
 }

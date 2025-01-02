@@ -1,17 +1,42 @@
 <?php
 header('Content-Type: application/json');
-
 require 'condb.php';
-include '_messages.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $response = ['status' => 'error', 'message' => 'Invalid request'];
 
-$page = 'blog';
-$response_option = null;
-$response_code = 200;
-
 switch ($method) {
+    case 'GET':
+        if (isset($_GET['id'])) {
+            //get by id
+            $id = $_GET['id'];
+            $stmt = $conn->prepare("SELECT * FROM tb_blog WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $blog = $result->fetch_assoc();
+
+            if ($blog) {
+                $response = ['status' => 'success', 'data' => $blog];
+            } else {
+                $response = ['status' => 'error', 'message' => 'Blog not found'];
+            }
+        } else {
+            //get all
+            $blogs = [];
+
+            $stmt = $conn->prepare("SELECT * FROM tb_blog");
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            while ($row = $result->fetch_assoc()) {
+                $blogs[] = $row;
+            }
+
+            $response = ['status' => 'success', 'data' => $blogs];
+        }
+        break;
+
     case 'POST': // Insert new blog
         $title = $_POST['title'] ?? null;
         $post = $_POST['post'] ?? null;
@@ -19,16 +44,15 @@ switch ($method) {
         if ($title && $post) {
             $stmt = $conn->prepare("INSERT INTO tb_blog (title, post, createAt) VALUES (?, ?, NOW())");
             $stmt->bind_param("ss", $title, $post);
-            if (!$stmt->execute()) {
-                $response_code = 500;
-                $response_err = $conn->error;
-            };
+            if ($stmt->execute()) {
+                $response = ['status' => 'success', 'message' => 'Blog inserted successfully'];
+            } else {
+                $response = ['status' => 'error', 'message' => 'Insert failed: ' . $conn->error];
+            }
             $stmt->close();
         } else {
-            $response_option = 'no-data';
+            $response = ['status' => 'error', 'message' => 'Title and Post are required'];
         }
-
-        $response = query_response($page, 'POST', $response_code, $response_option, $response_err);
         break;
 
         //curl -X POST -d "title=My Blog&post=This is my first post" http://localhost:8080/php/blog.php
@@ -43,17 +67,13 @@ switch ($method) {
             $stmt->bind_param("i", $id);
 
             if ($stmt->execute()) {
-                if ($stmt->affected_rows > 0) {
-                    $response = ['status' => 'success', 'message' => $msg['blog']['delete']['success']];
-                } else {
-                    $response = ['status' => 'error', 'message' => $msg['blog']['delete']['not-found']];
-                }
+                $response = ['status' => 'success', 'message' => 'Blog deleted successfully'];
             } else {
                 $response = ['status' => 'error', 'message' => 'Delete failed: ' . $conn->error];
             }
             $stmt->close();
         } else {
-            $response = ['status' => 'error', 'message' => $msg['blog']['delete']['no-id']];
+            $response = ['status' => 'error', 'message' => 'ID is required for deletion'];
         }
         break;
 
@@ -64,3 +84,4 @@ switch ($method) {
 }
 
 echo json_encode($response);
+$conn->close();
